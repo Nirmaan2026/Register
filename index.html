@@ -270,7 +270,8 @@ input:disabled,select:disabled{cursor:not-allowed}
 .ev:hover{background:rgba(232,169,139,.05)}
 .ev .n{flex:1;min-width:0}
 .ev .n b{display:block;font-weight:600;font-size:15px}
-.ev .n small{display:block;color:var(--faint);font-size:12.5px}
+.ev .n small{display:block;color:var(--muted);font-size:13px;line-height:1.35;margin-top:2px}
+.ev .n .alt{font-style:normal;font-weight:500;color:var(--faint);font-size:13.5px}
 .ev .p{text-align:right;flex:none}
 .ev .p b{display:block;font-weight:800;font-stretch:125%;color:var(--copper-hi);font-variant-numeric:tabular-nums}
 .ev .p small{display:block;color:var(--faint);font-size:11.5px;font-variant-numeric:tabular-nums}
@@ -857,6 +858,22 @@ input:disabled,select:disabled{cursor:not-allowed}
   [...$('event').querySelectorAll('optgroup')].forEach(g=>{tracks[g.label]=[...g.querySelectorAll('option')].map(o=>o.value);});
   let curTrack='Tech Events', lastFocus=null;
   const rupee=n=>n===0?'Free':'₹'+n;
+  const DESC={
+    'Arch Tech (Arc Bridge)':'Build an arch bridge using bricks.',
+    'Blindfolded Builder (Blind O Civil)':'Build a structure while blindfolded.',
+    'Civiotrix (Robotic Arm with Hydraulic System)':'Power a robotic arm using syringes and pipes.',
+    'Earthquake Challenge':'Build a multi-storey popsicle-stick frame to resist earthquakes.',
+    'Engineering Maze':'Solve technical puzzles to escape the room.',
+    'Logo Undercover':'Create a logo on a given theme using the items provided.',
+    'Pick and Speak':'Pick a topic on the spot and speak on it.',
+    'Popsicle Bridge':'Build a truss bridge from popsicle sticks, thread and glue.',
+    'Site-to-Solution':'Present a poster on a real engineering problem around campus, with your solution.',
+    'TechVOX (Tech Tark)':'Debate on technical and engineering topics.',
+    'Waste to Value Construction':'Turn waste materials into a useful construction.',
+    'Dance Mania':'Dance competition.',
+    'Fancy Flow':'Fancy dress competition.',
+    'Flavour Feast':'Cook a dish without gas or electricity.'
+  };
   function renderList(){
     elist.innerHTML='';
     tracks[curTrack].forEach(name=>{
@@ -864,8 +881,9 @@ input:disabled,select:disabled{cursor:not-allowed}
       const b=document.createElement('button');b.type='button';b.className='ev';b.dataset.name=name;
       const main=f?(early?f[0]:f[1]):null;
       b.innerHTML='<span class="n"><b></b><small></small></span><span class="p"><b></b><small></small></span><span class="go"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span>';
-      b.querySelector('.n b').textContent=m?m[1]:name;
-      const sm=b.querySelector('.n small'); if(m)sm.textContent=m[2]; else sm.remove();
+      const tb=b.querySelector('.n b');tb.textContent=m?m[1]:name;
+      if(m){const al=document.createElement('i');al.className='alt';al.textContent=' · '+m[2];tb.appendChild(al);}
+      const sm=b.querySelector('.n small'); if(DESC[name])sm.textContent=DESC[name]; else sm.remove();
       b.querySelector('.p b').textContent=main==null?'TBA':rupee(main);
       const ps=b.querySelector('.p small');
       if(f&&f[1]>0&&early)ps.textContent=rupee(f[1])+' on-spot'; else ps.remove();
