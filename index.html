@@ -130,6 +130,13 @@ button{font:inherit;cursor:pointer}
 
 .done h1{display:flex;align-items:center;gap:10px}
 .done h1 svg{width:28px;height:28px;stroke:var(--copper);fill:none;stroke-width:2.4}
+.submit-err{margin:0;color:var(--error);font-size:14px;background:rgba(255,138,138,.08);border-left:3px solid var(--error);padding:10px 12px;border-radius:4px}
+.submit[aria-busy="true"]{opacity:.7;cursor:progress}
+.regid{margin:18px 0 0;border:1px dashed var(--copper);border-radius:8px;padding:14px 16px;display:grid;gap:2px}
+.regid span{font-size:13px;color:var(--muted)}
+.regid b{font-size:28px;letter-spacing:.06em;color:var(--copper-hi);font-variant-numeric:tabular-nums}
+.regid small{font-size:13px;color:var(--muted)}
+.testmode{margin:14px 0 0!important;color:var(--error)!important;font-size:14px!important}
 .summary{margin:18px 0 20px;display:grid;grid-template-columns:auto 1fr;gap:8px 18px;font-size:15px}
 .summary dt{color:var(--muted)}
 .summary dd{margin:0;font-weight:600;min-width:0;overflow-wrap:anywhere}
@@ -291,8 +298,9 @@ button{font:inherit;cursor:pointer}
 
       <div class="actions">
         <button type="button" class="back" id="back">Back</button>
-        <button type="submit" class="submit">Submit</button>
+        <button type="submit" class="submit" id="submit-btn">Submit</button>
       </div>
+      <p class="submit-err" id="submit-err" role="alert" hidden></p>
      </div>
     </form>
   </div>
@@ -301,6 +309,8 @@ button{font:inherit;cursor:pointer}
     <div class="card done">
       <h1><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>Registration submitted</h1>
       <p>Your registration is confirmed once the payment is verified. Keep your payment screenshot until the event.</p>
+      <div class="regid" id="regid-box" hidden><span>Registration ID</span><b id="regid"></b><small>Note this down. Show it at the event desk.</small></div>
+      <p class="testmode" id="testmode" hidden>Test mode: this page is not connected to the registration sheet yet, so nothing was saved.</p>
       <dl class="summary" id="summary"></dl>
       <button type="button" class="submit" id="again">Register for another event</button>
     </div>
@@ -312,6 +322,8 @@ button{font:inherit;cursor:pointer}
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script>
 (function(){
+  /* ===== SAVING — the Google Apps Script web app URL (ends in /exec) ===== */
+  const SCRIPT_URL = '';
   /* ===== PAYMENT SETTINGS — edit these ===== */
   const UPI_ID = '7008681842@ybl';
   const PAYEE_NAME = 'NIRMAAN 4.0';
@@ -497,15 +509,58 @@ button{font:inherit;cursor:pointer}
     try{navigator.clipboard.writeText(UPI_ID).then(done,()=>{getSelection().selectAllChildren($('upi-id'));});}catch(e){getSelection().selectAllChildren($('upi-id'));}
   });
 
-  form.addEventListener('submit',e=>{
+  // Shrink the screenshot before upload (keeps the UTR legible, saves mobile data)
+  function imageToJpeg(file){
+    return new Promise(resolve=>{
+      const url=URL.createObjectURL(file), img=new Image();
+      img.onload=()=>{
+        const max=2000, k=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+        const c=document.createElement('canvas');c.width=Math.round(img.naturalWidth*k);c.height=Math.round(img.naturalHeight*k);
+        const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);
+        URL.revokeObjectURL(url);resolve({data:c.toDataURL('image/jpeg',0.88).split(',')[1],type:'image/jpeg'});
+      };
+      img.onerror=()=>{URL.revokeObjectURL(url);const r=new FileReader();
+        r.onload=()=>resolve({data:String(r.result).split(',')[1],type:file.type||'image/jpeg'});r.readAsDataURL(file);};
+      img.src=url;
+    });
+  }
+
+  let sending=false;
+  form.addEventListener('submit',async e=>{
     e.preventDefault();
     if(step===1){$('next').click();return;}
+    if(sending)return;
     if(firstBad([shot.closest('.q')]))return;
-    const ev=selectedEvent();
-    const col=$('col-out').checked?$('other-college').value.trim():'GCE Keonjhar';
-    const rows=isFaculty()
+    const ev=selectedEvent(), fac=isFaculty();
+    const col=fac?'GCE Keonjhar':($('col-out').checked?$('other-college').value.trim():'GCE Keonjhar');
+    const rows=fac
       ?[['Name',$('name').value.trim()],['Mobile','+91 '+mobileDigits()],['Role','Faculty'],['Department',$('branch').value],['Event',ev.name],['Amount paid','₹'+payFee]]
       :[['Name',$('name').value.trim()],['Mobile','+91 '+mobileDigits()],['College',col],['Year',$('year').value],['Branch',$('branch').value],['Roll no.',$('roll').value.trim()],['Event',ev.name],['Amount paid','₹'+payFee]];
+
+    const btn=$('submit-btn'), err=$('submit-err');
+    err.hidden=true;sending=true;btn.setAttribute('aria-busy','true');btn.textContent='Submitting…';$('back').disabled=true;
+    let regId=null;
+    try{
+      if(SCRIPT_URL){
+        const payload={
+          name:$('name').value.trim(), mobile:mobileDigits(),
+          category:fac?'Faculty':($('col-out').checked?'Other college student':'GCE Keonjhar student'),
+          college:col, year:fac?'':$('year').value, branch:$('branch').value, roll:fac?'':$('roll').value.trim(),
+          event:ev.name, track:ev.track, fee:payFee, shot:await imageToJpeg(shot.files[0])
+        };
+        const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+        const out=await res.json();
+        if(!out.ok)throw new Error(out.error||'The registration could not be saved.');
+        regId=out.id;
+      }
+    }catch(x){
+      err.textContent='Your registration was not submitted. '+(navigator.onLine===false?'You appear to be offline. ':'')+'Check your internet connection and press Submit again. If it keeps failing, contact the coordinator.';
+      err.hidden=false;sending=false;btn.removeAttribute('aria-busy');btn.textContent='Submit';$('back').disabled=false;
+      return;
+    }
+    sending=false;btn.removeAttribute('aria-busy');btn.textContent='Submit';$('back').disabled=false;
+    $('regid-box').hidden=!regId;$('regid').textContent=regId||'';
+    $('testmode').hidden=!!SCRIPT_URL;
     const dl=$('summary');dl.innerHTML='';
     rows.forEach(([k,v])=>{const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=k;dd.textContent=v;dl.append(dt,dd);});
     $('formView').hidden=true;$('doneView').hidden=false;window.scrollTo({top:0,behavior:'smooth'});
