@@ -141,7 +141,13 @@ button{font:inherit;cursor:pointer}
 .summary dt{color:var(--muted)}
 .summary dd{margin:0;font-weight:600;min-width:0;overflow-wrap:anywhere}
 
-.foot{text-align:center;color:var(--muted);font-size:13px;margin-top:28px}
+.foot{text-align:center;color:var(--muted);font-size:13px;margin-top:28px;display:grid;gap:10px;justify-items:center}
+.foot-h{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--copper)}
+.coords{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.coords a{display:grid;gap:1px;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 16px;min-width:200px}
+.coords a:hover{border-color:var(--copper)}
+.coords b{color:var(--ink);font-size:14px;font-weight:600}
+.coords span{font-size:14px;font-variant-numeric:tabular-nums}
 @media (max-width:480px){ .card,.q{padding:20px 18px} .amount{font-size:38px} }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -246,6 +252,7 @@ button{font:inherit;cursor:pointer}
             <option>Chess</option>
             <option>COD</option>
             <option>Dance Mania</option>
+            <option>Face Painting</option>
             <option>Fancy Flow</option>
             <option>Flavour Feast</option>
             <option>Free Fire</option>
@@ -268,6 +275,7 @@ button{font:inherit;cursor:pointer}
         <button type="button" class="submit" id="next">Proceed to payment</button>
         <button type="button" class="clear" id="clear">Clear form</button>
       </div>
+      <p class="submit-err" id="submit-err1" role="alert" hidden></p>
      </div>
 
      <div id="step2" style="display:grid;gap:16px" hidden>
@@ -308,7 +316,7 @@ button{font:inherit;cursor:pointer}
   <div id="doneView" hidden>
     <div class="card done">
       <h1><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>Registration submitted</h1>
-      <p>Your registration is confirmed once the payment is verified. Keep your payment screenshot until the event.</p>
+      <p id="done-msg">Your registration is confirmed once the payment is verified. Keep your payment screenshot until the event.</p>
       <div class="regid" id="regid-box" hidden><span>Registration ID</span><b id="regid"></b><small>Note this down. Show it at the event desk.</small></div>
       <p class="testmode" id="testmode" hidden>Test mode: this page is not connected to the registration sheet yet, so nothing was saved.</p>
       <dl class="summary" id="summary"></dl>
@@ -316,7 +324,13 @@ button{font:inherit;cursor:pointer}
     </div>
   </div>
 
-  <p class="foot">For help, contact [Coordinator Name] · +91 XXXXX XXXXX</p>
+  <div class="foot">
+    <span class="foot-h">Coordinators</span>
+    <div class="coords">
+      <a href="tel:+919938155300"><b>Koushik Kumar Shamal</b><span>+91 9938155300</span></a>
+      <a href="tel:+917008681842"><b>Dr. Satyam Panda</b><span>+91 7008681842</span></a>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
@@ -329,7 +343,7 @@ button{font:inherit;cursor:pointer}
   const PAYEE_NAME = 'NIRMAAN 4.0';
   // Early fee applies until this moment; the late fee applies after it.
   const EARLY_FEE_UNTIL = '2026-11-10T23:59:59+05:30';
-  // [early fee, late fee] in rupees, from the NIRMAAN 4.0 fee list. null = not announced yet.
+  // [early-bird fee, on-spot fee] in rupees, from the final NIRMAAN 4.0 list. 0 = free.
   const FEES = {
     'Arch Tech (Arc Bridge)':[49,69],
     'Blindfolded Builder (Blind O Civil)':[49,69],
@@ -344,14 +358,15 @@ button{font:inherit;cursor:pointer}
     'TechVOX (Tech Tark)':[49,69],
     'Waste to Value Construction':[49,69],
     'Be a Roadie':[59,79],
-    'BGMI':[100,120],
+    'BGMI':[100,130],
     'Blind Date':[79,99],
     'Chess':[49,69],
     'COD':[100,120],
-    'Dance Mania':[49,69],
+    'Dance Mania':[69,89],
+    'Face Painting':[49,69],
     'Fancy Flow':[69,89],
-    'Flavour Feast':null,
-    'Free Fire':[100,120],
+    'Flavour Feast':[0,0],
+    'Free Fire':[100,130],
     'Meme King':[49,69],
     'Music Melodies':[49,69],
     'Short Film Making':[99,119],
@@ -431,7 +446,7 @@ button{font:inherit;cursor:pointer}
   const isEarly=()=>Date.now()<=new Date(EARLY_FEE_UNTIL).getTime();
   const feeFor=ev=>{const f=FEES[ev.name];return f?(isEarly()?f[0]:f[1]):null;};
   const earlyDate=new Date(EARLY_FEE_UNTIL).toLocaleDateString('en-IN',{day:'numeric',month:'short',timeZone:'Asia/Kolkata'});
-  let payFee=null;
+  let payFee=null, sending=false;
 
   function showStep(n){
     step=n;$('step1').hidden=n!==1;$('step2').hidden=n!==2;
@@ -497,12 +512,16 @@ button{font:inherit;cursor:pointer}
       $('next').textContent='Fee not announced yet';$('next').disabled=true;return;
     }
     $('next').disabled=false;
+    if(fee===0){
+      $('fee-amt').textContent='Free';$('fee-note').textContent='No payment needed for this event.';
+      $('next').textContent='Submit registration';return;
+    }
     $('fee-amt').textContent='₹'+fee;
-    $('fee-note').textContent=isEarly()?('Early-bird fee till '+earlyDate+' · ₹'+f[1]+' after that'):'Late fee (early-bird period has ended)';
+    $('fee-note').textContent=isEarly()?('Early-bird fee till '+earlyDate+' · ₹'+f[1]+' on-spot'):'On-spot fee (early-bird period has ended)';
     $('next').textContent='Proceed to pay ₹'+fee;
   }
   $('event').addEventListener('change',updateFee);
-  $('next').addEventListener('click',()=>{ if(firstBad(step1Qs()))return; if(feeFor(selectedEvent())==null)return; preparePayment(); showStep(2); });
+  $('next').addEventListener('click',()=>{ if(sending)return; if(firstBad(step1Qs()))return; const fee=feeFor(selectedEvent()); if(fee==null)return; if(fee===0){payFee=0;submitRegistration(true);return;} preparePayment(); showStep(2); });
   $('back').addEventListener('click',()=>showStep(1));
   $('copy-upi').addEventListener('click',()=>{
     const done=()=>{$('copy-upi').textContent='Copied';setTimeout(()=>$('copy-upi').textContent='Copy',1500);};
@@ -525,19 +544,22 @@ button{font:inherit;cursor:pointer}
     });
   }
 
-  let sending=false;
-  form.addEventListener('submit',async e=>{
+  form.addEventListener('submit',e=>{
     e.preventDefault();
     if(step===1){$('next').click();return;}
     if(sending)return;
     if(firstBad([shot.closest('.q')]))return;
+    submitRegistration(false);
+  });
+
+  async function submitRegistration(free){
     const ev=selectedEvent(), fac=isFaculty();
     const col=fac?'GCE Keonjhar':($('col-out').checked?$('other-college').value.trim():'GCE Keonjhar');
     const rows=fac
-      ?[['Name',$('name').value.trim()],['Mobile','+91 '+mobileDigits()],['Role','Faculty'],['Department',$('branch').value],['Event',ev.name],['Amount paid','₹'+payFee]]
-      :[['Name',$('name').value.trim()],['Mobile','+91 '+mobileDigits()],['College',col],['Year',$('year').value],['Branch',$('branch').value],['Roll no.',$('roll').value.trim()],['Event',ev.name],['Amount paid','₹'+payFee]];
+      ?[['Name',$('name').value.trim()],['Mobile','+91 '+mobileDigits()],['Role','Faculty'],['Department',$('branch').value],['Event',ev.name],['Amount paid',free?'Free':'₹'+payFee]]
+      :[['Name',$('name').value.trim()],['Mobile','+91 '+mobileDigits()],['College',col],['Year',$('year').value],['Branch',$('branch').value],['Roll no.',$('roll').value.trim()],['Event',ev.name],['Amount paid',free?'Free':'₹'+payFee]];
 
-    const btn=$('submit-btn'), err=$('submit-err');
+    const btn=free?$('next'):$('submit-btn'), err=free?$('submit-err1'):$('submit-err'), label=btn.textContent;
     err.hidden=true;sending=true;btn.setAttribute('aria-busy','true');btn.textContent='Submitting…';$('back').disabled=true;
     let regId=null;
     try{
@@ -546,7 +568,7 @@ button{font:inherit;cursor:pointer}
           name:$('name').value.trim(), mobile:mobileDigits(),
           category:fac?'Faculty':($('col-out').checked?'Other college student':'GCE Keonjhar student'),
           college:col, year:fac?'':$('year').value, branch:$('branch').value, roll:fac?'':$('roll').value.trim(),
-          event:ev.name, track:ev.track, fee:payFee, shot:await imageToJpeg(shot.files[0])
+          event:ev.name, track:ev.track, fee:payFee, shot:free?null:await imageToJpeg(shot.files[0])
         };
         const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
         const out=await res.json();
@@ -555,16 +577,17 @@ button{font:inherit;cursor:pointer}
       }
     }catch(x){
       err.textContent='Your registration was not submitted. '+(navigator.onLine===false?'You appear to be offline. ':'')+'Check your internet connection and press Submit again. If it keeps failing, contact the coordinator.';
-      err.hidden=false;sending=false;btn.removeAttribute('aria-busy');btn.textContent='Submit';$('back').disabled=false;
+      err.hidden=false;sending=false;btn.removeAttribute('aria-busy');btn.textContent=label;$('back').disabled=false;
       return;
     }
-    sending=false;btn.removeAttribute('aria-busy');btn.textContent='Submit';$('back').disabled=false;
+    sending=false;btn.removeAttribute('aria-busy');btn.textContent=label;$('back').disabled=false;
     $('regid-box').hidden=!regId;$('regid').textContent=regId||'';
     $('testmode').hidden=!!SCRIPT_URL;
     const dl=$('summary');dl.innerHTML='';
     rows.forEach(([k,v])=>{const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=k;dd.textContent=v;dl.append(dt,dd);});
+    $('done-msg').textContent=free?'You are registered. This event is free, so no payment is needed.':'Your registration is confirmed once the payment is verified. Keep your payment screenshot until the event.';
     $('formView').hidden=true;$('doneView').hidden=false;window.scrollTo({top:0,behavior:'smooth'});
-  });
+  }
 
   function reset(keepPerson){
     const keep=keepPerson?{name:$('name').value,mobile:$('mobile').value,year:$('year').value,branch:$('branch').value,roll:$('roll').value,'other-college':$('other-college').value}:null;

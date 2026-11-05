@@ -14,7 +14,7 @@
 const SHEET_NAME  = 'Registrations';
 const FOLDER_NAME = 'NIRMAAN 4.0 Payment Screenshots';
 
-// Must match the website. [early fee, late fee] in rupees; null = not announced.
+// Must match the website. [early-bird fee, on-spot fee] in rupees; 0 = free event.
 const EARLY_FEE_UNTIL = new Date('2026-11-10T23:59:59+05:30');
 const FEES = {
   'Arch Tech (Arc Bridge)': [49, 69],
@@ -30,14 +30,15 @@ const FEES = {
   'TechVOX (Tech Tark)': [49, 69],
   'Waste to Value Construction': [49, 69],
   'Be a Roadie': [59, 79],
-  'BGMI': [100, 120],
+  'BGMI': [100, 130],
   'Blind Date': [79, 99],
   'Chess': [49, 69],
   'COD': [100, 120],
-  'Dance Mania': [49, 69],
+  'Dance Mania': [69, 89],
+  'Face Painting': [49, 69],
   'Fancy Flow': [69, 89],
-  'Flavour Feast': null,
-  'Free Fire': [100, 120],
+  'Flavour Feast': [0, 0],
+  'Free Fire': [100, 130],
   'Meme King': [49, 69],
   'Music Melodies': [49, 69],
   'Short Film Making': [99, 119],
@@ -90,12 +91,14 @@ function doPost(e) {
     if (!FEES[event]) throw new Error('Registration for this event is not open yet.');
     const isStudent = category !== 'Faculty';
     if (isStudent && (!d.year || !clean_(d.roll, 40))) throw new Error('Year or roll number is missing.');
-    if (!d.shot || !d.shot.data || !/^image\//.test(d.shot.type || '')) throw new Error('Payment screenshot is missing.');
-
     const early = new Date() <= EARLY_FEE_UNTIL;
     const fee = early ? FEES[event][0] : FEES[event][1];
-    const bytes = Utilities.base64Decode(d.shot.data);
-    if (bytes.length > 10 * 1024 * 1024) throw new Error('Screenshot is too large.');
+    let bytes = null;
+    if (fee > 0) {
+      if (!d.shot || !d.shot.data || !/^image\//.test(d.shot.type || '')) throw new Error('Payment screenshot is missing.');
+      bytes = Utilities.base64Decode(d.shot.data);
+      if (bytes.length > 10 * 1024 * 1024) throw new Error('Screenshot is too large.');
+    }
 
     lock.waitLock(30000);
     const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
@@ -106,9 +109,13 @@ function doPost(e) {
     const roll = clean_(d.roll, 40);
 
     // ---- save the screenshot
-    const ext = (d.shot.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
-    const fileName = [regId, isStudent ? roll : mobile, event].join('_').replace(/[^\w.-]+/g, '-') + '.' + ext;
-    const file = getFolder_().createFile(Utilities.newBlob(bytes, d.shot.type, fileName));
+    let shotCell = 'Free event';
+    if (bytes) {
+      const ext = (d.shot.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
+      const fileName = [regId, isStudent ? roll : mobile, event].join('_').replace(/[^\w.-]+/g, '-') + '.' + ext;
+      const file = getFolder_().createFile(Utilities.newBlob(bytes, d.shot.type, fileName));
+      shotCell = '=HYPERLINK("' + file.getUrl() + '","View")';
+    }
 
     // ---- remarks for the checking team
     const remarks = [];
@@ -125,9 +132,9 @@ function doPost(e) {
     sh.appendRow([
       new Date(), regId, name, mobile, category,
       clean_(d.college, 120), isStudent ? clean_(d.year, 20) : '', clean_(d.branch, 80),
-      isStudent ? roll : '', event, fee, early ? 'Early' : 'Late',
-      '=HYPERLINK("' + file.getUrl() + '","View")',
-      'Pending', '', remarks.join('; ')
+      isStudent ? roll : '', event, fee, fee === 0 ? 'Free' : (early ? 'Early-bird' : 'On-spot'),
+      shotCell,
+      fee === 0 ? 'Verified' : 'Pending', '', remarks.join('; ')
     ]);
 
     return json_({ ok: true, id: regId, fee: fee });
