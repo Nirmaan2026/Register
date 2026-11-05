@@ -70,7 +70,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .crest > *:not(canvas){position:relative;z-index:1}
 #frame3d{opacity:.7;position:absolute;left:50%;top:-10px;transform:translateX(-50%);width:min(560px,100%);height:330px;pointer-events:none;z-index:0;
   -webkit-mask-image:radial-gradient(closest-side,#000 55%,transparent 100%);mask-image:radial-gradient(closest-side,#000 55%,transparent 100%)}
-.crest .logo{position:relative;display:block;width:min(230px,58%);margin:0 auto;perspective:700px}
+.crest .logo{position:relative;display:block;width:min(230px,58%);margin:0 auto;perspective:900px}
 .badge{position:relative;display:block;transform-style:preserve-3d;will-change:transform}
 .badge .edge{position:absolute;inset:0;height:100%}
 .crest .logo::before{content:"";position:absolute;left:8%;right:8%;top:30%;bottom:-4%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.6),transparent);filter:blur(14px);transform:translateY(18px)}
@@ -1232,7 +1232,7 @@ input:disabled,select:disabled{cursor:not-allowed}
     //      and rocks slowly on its own when there is no tilt input
     const logo=document.querySelector('.crest .logo'), front=logo.querySelector('img');
     const badge=document.createElement('span');badge.className='badge';logo.insertBefore(badge,front);
-    const DEPTH=8, STEP=1.4;
+    const DEPTH=16, STEP=1.5;
     for(let i=DEPTH;i>=1;i--){                       // stacked copies behind the logo form its metal edge
       const e=front.cloneNode();e.alt='';e.setAttribute('aria-hidden','true');
       e.className='edge'+(i===DEPTH?' last':'');e.style.transform='translateZ('+(-i*STEP)+'px)';badge.appendChild(e);
@@ -1258,21 +1258,25 @@ input:disabled,select:disabled{cursor:not-allowed}
       let tx=0,ty=0,rx=0,ry=0,lastIn=-1e9,base=null,run=true,lr=0;
       const input=(x,y)=>{tx=x;ty=y;lastIn=performance.now();};
       if(matchMedia('(hover: hover) and (pointer: fine)').matches)
-        addEventListener('pointermove',e=>input((e.clientY/innerHeight-.5)*-12,(e.clientX/innerWidth-.5)*22));
+        addEventListener('pointermove',e=>input((e.clientY/innerHeight-.5)*-24,(e.clientX/innerWidth-.5)*60));
       addEventListener('deviceorientation',e=>{
         if(e.gamma==null||e.beta==null)return;
-        if(base==null)base=e.beta; base+=(e.beta-base)*.01;          // slowly re-centre on how the phone is held
-        input(clamp((e.beta-base)*.6,10),clamp(-e.gamma*.8,20));
+        if(base==null)base=e.beta; base+=(e.beta-base)*.003;          // slowly re-centre on how the phone is held
+        input(clamp((e.beta-base)*1.1,20),clamp(-e.gamma*1.5,38));
       });
+      if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function'){
+        logo.style.cursor='pointer';
+        logo.addEventListener('click',()=>{DeviceOrientationEvent.requestPermission().catch(()=>{});},{once:true});
+      }
       function loop(now){
         if(!run){lr=0;return;}
         let gx=tx,gy=ty;
-        if(now-lastIn>2500){const t=now/1000;gy=16*Math.sin(t*2*Math.PI/8);gx=4*Math.sin(t*2*Math.PI/11);}
-        rx+=(gx-rx)*.07;ry+=(gy-ry)*.07;
+        if(now-lastIn>2500){const t=now/1000;gy=32*Math.sin(t*2*Math.PI/7);gx=8*Math.sin(t*2*Math.PI/10);}
+        rx+=(gx-rx)*.1;ry+=(gy-ry)*.1;
         badge.style.transform='rotateX('+rx.toFixed(2)+'deg) rotateY('+ry.toFixed(2)+'deg)';
-        gloss.style.backgroundPosition=(50-ry*2.4).toFixed(1)+'% 0';
-        gloss.style.opacity=Math.min(.75,Math.abs(ry)/26+Math.abs(rx)/40).toFixed(2);
-        cv.style.transform='translateX(-50%) translate('+(-ry*.9).toFixed(1)+'px,'+(rx*.7).toFixed(1)+'px)';
+        gloss.style.backgroundPosition=(50-ry*1.6).toFixed(1)+'% 0';
+        gloss.style.opacity=Math.min(.8,Math.abs(ry)/40+Math.abs(rx)/50).toFixed(2);
+        cv.style.transform='translateX(-50%) translate('+(-ry*.7).toFixed(1)+'px,'+(rx*.6).toFixed(1)+'px)';
         lr=requestAnimationFrame(loop);
       }
       const start=()=>{if(!lr&&run)lr=requestAnimationFrame(loop);};
