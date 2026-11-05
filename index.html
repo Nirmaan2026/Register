@@ -149,6 +149,10 @@ select:invalid{color:var(--faint)}
 option,optgroup{background:#1b181d;color:var(--ink)}
 input:focus,select:focus{outline:none;border-color:var(--copper);box-shadow:0 0 0 3px rgba(232,169,139,.16)}
 #name{text-transform:uppercase}
+input[type=text].good{border-color:rgba(143,214,168,.45);padding-right:42px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238fd6a8' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;background-size:18px}
+input[type=text].good:focus{border-color:var(--copper)}
 .err{display:none;color:var(--error);font-size:13px;margin-top:6px}
 .q.invalid .err{display:block}
 .q.invalid input[type=text],.q.invalid select{border-color:var(--error)}
@@ -220,7 +224,13 @@ input:disabled,select:disabled{cursor:not-allowed}
   background:linear-gradient(135deg,var(--copper-hi),var(--copper));box-shadow:0 10px 24px -12px rgba(232,169,139,.6);transition:transform .15s,filter .15s}
 .primary:hover{filter:brightness(1.05);transform:translateY(-1px)}
 .primary:disabled{background:#3a3234;color:var(--muted);box-shadow:none;cursor:not-allowed;transform:none}
-.primary[aria-busy="true"]{opacity:.75;cursor:progress}
+.primary[aria-busy="true"]{opacity:.8;cursor:progress}
+.sendbar{margin-top:14px}
+.sendbar .track{height:4px;border-radius:4px;background:rgba(232,169,139,.12);overflow:hidden}
+.sendbar i{position:relative;display:block;height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,var(--copper),var(--rose));overflow:hidden}
+.sendbar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:shim 1.2s linear infinite}
+@keyframes shim{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.sendbar span{display:block;margin-top:7px;font-size:12.5px;color:var(--muted);text-align:center}
 .ghost{background:none;border:1px solid var(--line-2);border-radius:12px;padding:14px 20px;font-weight:600;color:var(--ink)}
 .ghost:hover{border-color:var(--copper)}
 .ghost{display:inline-flex;align-items:center;justify-content:center;gap:8px}
@@ -233,8 +243,20 @@ input:disabled,select:disabled{cursor:not-allowed}
 .pay{margin-top:18px;border:1px solid var(--line);border-radius:12px;background:var(--field);padding:20px;text-align:center}
 .pay-event{font-size:13px;color:var(--muted)}
 .pay-event b{display:block;color:var(--ink);font-size:16px;margin-top:2px}
-.amount{font-size:44px;font-weight:800;font-stretch:125%;color:var(--copper-hi);line-height:1.1;margin:12px 0 2px;font-variant-numeric:tabular-nums}
+.amount{display:inline-block;font-size:44px;font-weight:800;font-stretch:125%;color:var(--copper-hi);line-height:1.1;margin:12px 0 2px;font-variant-numeric:tabular-nums}
 .amount-note{font-size:13px;color:var(--muted);margin:0 0 16px}
+.amt-l{margin-top:14px;font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--copper)}
+.amt-l + .amount{margin-top:2px}
+.finder{position:relative;width:fit-content;max-width:100%;margin:6px auto 0;padding:14px}
+.finder::before{content:"";position:absolute;inset:0;pointer-events:none;--f:var(--copper);
+  background:
+    linear-gradient(var(--f),var(--f)) left top/26px 2.5px no-repeat,linear-gradient(var(--f),var(--f)) left top/2.5px 26px no-repeat,
+    linear-gradient(var(--f),var(--f)) right top/26px 2.5px no-repeat,linear-gradient(var(--f),var(--f)) right top/2.5px 26px no-repeat,
+    linear-gradient(var(--f),var(--f)) left bottom/26px 2.5px no-repeat,linear-gradient(var(--f),var(--f)) left bottom/2.5px 26px no-repeat,
+    linear-gradient(var(--f),var(--f)) right bottom/26px 2.5px no-repeat,linear-gradient(var(--f),var(--f)) right bottom/2.5px 26px no-repeat;
+  border-radius:4px;animation:finder 2.6s ease-in-out infinite}
+@keyframes finder{50%{inset:5px;opacity:.65}}
+.finder .qrwrap{box-shadow:0 0 0 1px rgba(232,169,139,.25),0 18px 40px -18px rgba(232,169,139,.35)}
 .qrwrap{position:relative;width:210px;max-width:100%;margin:0 auto;background:#fff;border-radius:12px;padding:12px}
 .qrwrap svg,.qrwrap img{display:block;width:100%;height:auto}
 .qrwrap .sample{position:absolute;inset:0;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.55)}
@@ -407,7 +429,7 @@ input:disabled,select:disabled{cursor:not-allowed}
         <div class="opts" role="radiogroup" aria-labelledby="college-l">
           <label class="opt"><input type="radio" name="college" id="col-gcek" value="GCE Keonjhar"><span>Yes, I study at GCE Keonjhar</span></label>
           <label class="opt"><input type="radio" name="college" id="col-out" value="Other college"><span>No, I'm from <b>another college</b></span></label>
-          <label class="opt"><input type="radio" name="college" id="col-fac" value="Faculty"><span>No, I&#8217;m a <b>faculty or staff</b> member</span></label>
+          <label class="opt"><input type="radio" name="college" id="col-fac" value="Faculty"><span>No, I'm a <b>faculty or staff</b> member</span></label>
         </div>
         <div id="other-wrap" hidden>
           <input type="text" id="other-college" name="otherCollege" autocomplete="organization" placeholder="Your college name" aria-label="Your college name">
@@ -527,9 +549,10 @@ input:disabled,select:disabled{cursor:not-allowed}
      <div id="step2" hidden>
       <div class="pay">
         <div class="pay-event">Payment for<b id="pay-event"></b></div>
+        <div class="amt-l">Amount to pay</div>
         <div class="amount" id="pay-amount"></div>
         <p class="amount-note">Enter this exact amount in your UPI app</p>
-        <div class="qrwrap" id="qr"></div>
+        <div class="finder"><div class="qrwrap" id="qr"></div></div>
         <p class="payee">Pays to <b id="payee"></b></p>
         <p class="scan">Scan and pay with Google Pay, PhonePe, Paytm or any UPI app <b id="scan-amt"></b>.</p>
         <div class="pay-opts">
@@ -703,7 +726,7 @@ input:disabled,select:disabled{cursor:not-allowed}
     const out=$('col-out').checked;$('other-wrap').hidden=!out;
     const fac=isFaculty();
     ['year','roll'].forEach(id=>{const el=$(id);el.disabled=fac;if(fac){el.value='';el.closest('.q').classList.remove('invalid');}el.closest('.q').classList.toggle('off',fac);});
-    syncYearChips();
+    syncYearChips();refreshGood();
     $('branch-l').textContent=fac?'Department':'Branch';
     const q=form.querySelector('.q[data-for=college]');if(q.classList.contains('invalid'))validate(q);
   }
@@ -715,6 +738,13 @@ input:disabled,select:disabled{cursor:not-allowed}
     el.addEventListener('change',()=>q.classList.contains('invalid')&&validate(q));
     el.addEventListener('input',()=>q.classList.contains('invalid')&&validate(q));
   });
+
+  // a green tick inside text fields that are filled in correctly
+  var GOOD={name:v=>v.replace(/[^A-Za-z]/g,'').length>=3, mobile:()=>/^[6-9]\d{9}$/.test(mobileDigits()),
+    roll:v=>v.trim().length>=3, 'other-college':v=>v.trim().length>=3};
+  function refreshGood(){if(!GOOD)return;Object.keys(GOOD).forEach(id=>{const el=$(id);el.classList.toggle('good',!el.disabled&&GOOD[id](el.value));});}
+  Object.keys(GOOD).forEach(id=>{$(id).addEventListener('input',refreshGood);$(id).addEventListener('change',refreshGood);});
+  form.addEventListener('reset',()=>setTimeout(refreshGood,0));
 
   function firstBad(qs){
     const bad=qs.filter(q=>!validate(q));
@@ -752,6 +782,7 @@ input:disabled,select:disabled{cursor:not-allowed}
     const ev=selectedEvent(), fee=feeFor(ev), roll=isFaculty()?('FAC '+mobileDigits()):$('roll').value.trim(); payFee=fee;
     $('pay-event').textContent=ev.name;
     $('pay-amount').textContent='₹'+fee;$('scan-amt').textContent='₹'+fee;
+    const pa=$('pay-amount');pa.classList.remove('pop');void pa.offsetWidth;pa.classList.add('pop');
     const box=$('qr'), note=('NIRMAAN '+roll+' '+ev.name).slice(0,50);
     if(QR_IMAGE_BY_EVENT[ev.name]){
       box.innerHTML='';const img=new Image();img.src=QR_IMAGE_BY_EVENT[ev.name];img.alt='Payment QR code for '+ev.name;box.appendChild(img);
@@ -846,6 +877,19 @@ input:disabled,select:disabled{cursor:not-allowed}
     submitRegistration(false);
   });
 
+  // progress bar shown under the button while a registration is being sent
+  function sendProgress(btn){
+    const host=btn.closest('.actions');
+    let bar=host.nextElementSibling;
+    if(!bar||!bar.classList.contains('sendbar')){bar=document.createElement('div');bar.className='sendbar';bar.innerHTML='<div class="track"><i></i></div><span>Please keep this page open until it finishes.</span>';host.after(bar);}
+    bar.hidden=false;
+    const fill=bar.querySelector('i');let v=0,target=0,rate=.05,raf=0;
+    (function loop(){v+=(target-v)*rate;fill.style.width=v.toFixed(1)+'%';raf=requestAnimationFrame(loop);})();
+    return {
+      stage(text,to,r){btn.textContent=text;target=to;rate=r;},
+      end(){cancelAnimationFrame(raf);fill.style.width='0';bar.hidden=true;}
+    };
+  }
   async function submitRegistration(free){
     const ev=selectedEvent(), fac=isFaculty();
     const col=fac?'GCE Keonjhar':($('col-out').checked?$('other-college').value.trim():'GCE Keonjhar');
@@ -857,19 +901,24 @@ input:disabled,select:disabled{cursor:not-allowed}
     else rows.splice(rows.length-1,0,['Participation','Solo']);
     const btn=free?$('next'):$('submit-btn'), err=free?$('submit-err1'):$('submit-err'), label=btn.textContent;
     err.hidden=true;sending=true;btn.setAttribute('aria-busy','true');btn.textContent='Submitting…';$('back').disabled=true;
+    const prog=sendProgress(btn);
     let regId=null;
     try{
       if(SCRIPT_URL){
+        let shotData=null;
+        if(!free){prog.stage('Preparing screenshot…',22,.08);shotData=await imageToJpeg(shot.files[0]);}
         const payload={
           name:$('name').value.trim(), mobile:mobileDigits(),
           category:fac?'Faculty':($('col-out').checked?'Other college student':'GCE Keonjhar student'),
           college:col, year:fac?'':$('year').value, branch:$('branch').value, roll:fac?'':$('roll').value.trim(),
-          event:ev.name, track:ev.track, fee:payFee, participation:isGroup()?'Group':'Solo', team:isGroup()?teamNames():[], shot:free?null:await imageToJpeg(shot.files[0])
+          event:ev.name, track:ev.track, fee:payFee, participation:isGroup()?'Group':'Solo', team:isGroup()?teamNames():[], shot:shotData
         };
+        prog.stage(free?'Saving…':'Uploading…',90,.012);
         const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
         const out=await res.json();
         if(!out.ok)throw new Error(out.error||'The registration could not be saved.');
         regId=out.id;
+        prog.stage('Finishing…',98,.06);
         if(BACKUP_URL){
           try{
             await Promise.race([
@@ -881,10 +930,10 @@ input:disabled,select:disabled{cursor:not-allowed}
       }
     }catch(x){
       err.textContent='Your registration was not submitted. '+(navigator.onLine===false?'You appear to be offline. ':'')+'Check your internet connection and press Submit again. If it keeps failing, contact a coordinator.';
-      err.hidden=false;sending=false;btn.removeAttribute('aria-busy');btn.textContent=label;$('back').disabled=false;
+      prog.end();err.hidden=false;sending=false;btn.removeAttribute('aria-busy');btn.textContent=label;$('back').disabled=false;
       return;
     }
-    sending=false;btn.removeAttribute('aria-busy');btn.textContent=label;$('back').disabled=false;
+    prog.end();sending=false;btn.removeAttribute('aria-busy');btn.textContent=label;$('back').disabled=false;
     lastReceipt={regId,rows:rows.slice(),free,when:new Date()};
     $('regid-box').hidden=!regId;$('regid').textContent=regId||'';
     $('testmode').hidden=!!SCRIPT_URL;
@@ -973,6 +1022,7 @@ input:disabled,select:disabled{cursor:not-allowed}
   });
 
   function reset(keepPerson){
+    setTimeout(refreshGood,0);
     const keep=keepPerson?{name:$('name').value,mobile:$('mobile').value,year:$('year').value,branch:$('branch').value,roll:$('roll').value,'other-college':$('other-college').value}:null;
     const colChoice=keepPerson?(form.querySelector('input[name=college]:checked')||{}).id:null;
     form.reset();shot.dispatchEvent(new Event('change'));
