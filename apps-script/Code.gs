@@ -62,6 +62,7 @@ function setup() {
   const data = sh.getRange(2, 1, sh.getMaxRows() - 1, sh.getMaxColumns());
   data.clearDataValidations();
   data.setNumberFormat('General');
+  sh.getRange(2, COL('Timestamp'), sh.getMaxRows() - 1, 1).setNumberFormat('dd/MM/yyyy HH:mm:ss');
   const status = SpreadsheetApp.newDataValidation()
     .requireValueInList(['Pending', 'Verified', 'Rejected'], true).build();
   sh.getRange(2, COL('Status'), sh.getMaxRows() - 1, 1).setDataValidation(status);
