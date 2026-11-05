@@ -11,6 +11,13 @@
  *      Press Deploy and copy the Web app URL (ends in /exec).
  */
 
+// false in the fest account (main copy). true in the backup account: it reuses the main copy's Reg ID.
+const IS_BACKUP = false;
+
+// Spreadsheet ID for a standalone script; '' = the spreadsheet this script is attached to.
+const SHEET_ID = '';
+function book_() { return SHEET_ID ? SpreadsheetApp.openById(SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet(); }
+
 const SHEET_NAME  = 'Registrations';
 const FOLDER_NAME = 'NIRMAAN 4.0 Payment Screenshots';
 
@@ -50,11 +57,10 @@ const FEES = {
 const HEADERS = ['Timestamp', 'Reg ID', 'Name', 'Mobile', 'Category', 'College', 'Year',
   'Branch / Dept', 'Roll No.', 'Event', 'Participation', 'Team members', 'Fee (₹)', 'Fee type', 'Payment screenshot',
   'Status', 'Checked by', 'Remarks'];
-const COL = name => HEADERS.indexOf(name) + 1;
 
 /** Run once from the editor: creates the sheet layout and the Drive folder. */
 function setup() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = book_();
   const sh = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME, 0);
   sh.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS])
     .setFontWeight('bold').setBackground('#3b1d2c').setFontColor('#ffffff');
@@ -109,11 +115,12 @@ function doPost(e) {
     }
 
     lock.waitLock(30000);
-    const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+    const sh = book_().getSheetByName(SHEET_NAME);
     if (!sh) throw new Error('Sheet not set up. Run setup() first.');
 
     const last = sh.getLastRow();
-    const regId = 'N4-' + String(last).padStart(4, '0');   // header is row 1 → first entry N4-0001
+    const regId = (IS_BACKUP && /^N4-\d{4,}$/.test(String(d.regId))) ? String(d.regId)
+      : 'N4-' + String(last).padStart(4, '0');   // header is row 1 → first entry N4-0001
     const roll = clean_(d.roll, 40);
 
     // ---- save the screenshot
@@ -173,3 +180,5 @@ function clean_(v, max) {
 function json_(o) {
   return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 }
+
+function COL(name) { return HEADERS.indexOf(name) + 1; }

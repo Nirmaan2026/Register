@@ -532,6 +532,8 @@ input:disabled,select:disabled{cursor:not-allowed}
 (function(){
   /* ===== SAVING — the Google Apps Script web app URL (ends in /exec) ===== */
   const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1qWfRJUsMd7uLxtX6MM18QnnzIaPuDbwvMGnfGOMZY1PhMN60kcjmKKt26vZlWC32/exec';
+  // Backup copy in a second Google account (same registration ID). '' = no backup.
+  const BACKUP_URL = 'https://script.google.com/macros/s/AKfycbx8i8QN6k8c5i4CY2hOWJncG_AZ4fp5q6z6xT89SDpGQPZqUBv4QCJguxk2igHt0T6uLA/exec';
   /* ===== PAYMENT SETTINGS — edit these ===== */
   const UPI_ID = 'vishnuprasadjena00-3@okaxis';
   const PAYEE_NAME = 'Bishnu Prasad Jena';
@@ -784,6 +786,14 @@ input:disabled,select:disabled{cursor:not-allowed}
         const out=await res.json();
         if(!out.ok)throw new Error(out.error||'The registration could not be saved.');
         regId=out.id;
+        if(BACKUP_URL){
+          try{
+            await Promise.race([
+              fetch(BACKUP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...payload,regId})}),
+              new Promise(r=>setTimeout(r,25000))
+            ]);
+          }catch(_){ /* the main copy is saved; a failed backup never blocks the student */ }
+        }
       }
     }catch(x){
       err.textContent='Your registration was not submitted. '+(navigator.onLine===false?'You appear to be offline. ':'')+'Check your internet connection and press Submit again. If it keeps failing, contact the coordinator.';
