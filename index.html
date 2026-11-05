@@ -388,9 +388,9 @@ input:disabled,select:disabled{cursor:not-allowed}
         <select id="event" name="event" required hidden tabindex="-1" aria-hidden="true">
           <option value="" selected disabled>Choose an event</option>
           <optgroup label="Tech Events">
-            <option>Arch Tech (Arc Bridge)</option>
-            <option>Blindfolded Builder (Blind O Civil)</option>
-            <option>Civiotrix (Robotic Arm with Hydraulic System)</option>
+            <option>Arc Bridge</option>
+            <option>Blind O Civil</option>
+            <option>Civiotrix</option>
             <option>Earthquake Challenge</option>
             <option>Engineering Maze</option>
             <option>Logo Undercover</option>
@@ -398,7 +398,7 @@ input:disabled,select:disabled{cursor:not-allowed}
             <option>Pick and Speak</option>
             <option>Popsicle Bridge</option>
             <option>Site-to-Solution</option>
-            <option>TechVOX (Tech Tark)</option>
+            <option>Tech Tark</option>
             <option>Waste to Value Construction</option>
           </optgroup>
           <optgroup label="Fun Events">
@@ -544,9 +544,9 @@ input:disabled,select:disabled{cursor:not-allowed}
   const EARLY_FEE_UNTIL = '2026-11-10T23:59:59+05:30';
   // [early-bird fee, on-spot fee] in rupees, from the final NIRMAAN 4.0 list. 0 = free.
   const FEES = {
-    'Arch Tech (Arc Bridge)':[49,69],
-    'Blindfolded Builder (Blind O Civil)':[49,69],
-    'Civiotrix (Robotic Arm with Hydraulic System)':[49,69],
+    'Arc Bridge':[49,69],
+    'Blind O Civil':[49,69],
+    'Civiotrix':[49,69],
     'Earthquake Challenge':[49,69],
     'Engineering Maze':[49,69],
     'Logo Undercover':[49,69],
@@ -554,7 +554,7 @@ input:disabled,select:disabled{cursor:not-allowed}
     'Pick and Speak':[49,69],
     'Popsicle Bridge':[49,69],
     'Site-to-Solution':[49,69],
-    'TechVOX (Tech Tark)':[49,69],
+    'Tech Tark':[49,69],
     'Waste to Value Construction':[49,69],
     'Be a Roadie':[59,79],
     'BGMI':[100,130],
@@ -859,16 +859,16 @@ input:disabled,select:disabled{cursor:not-allowed}
   let curTrack='Tech Events', lastFocus=null;
   const rupee=n=>n===0?'Free':'₹'+n;
   const DESC={
-    'Arch Tech (Arc Bridge)':'Build an arch bridge using bricks.',
-    'Blindfolded Builder (Blind O Civil)':'Build a structure while blindfolded.',
-    'Civiotrix (Robotic Arm with Hydraulic System)':'Power a robotic arm using syringes and pipes.',
+    'Arc Bridge':'Build an arch bridge using bricks.',
+    'Blind O Civil':'Build a structure while blindfolded.',
+    'Civiotrix':'Build a robotic arm with a hydraulic system of syringes and pipes.',
     'Earthquake Challenge':'Build a multi-storey popsicle-stick frame to resist earthquakes.',
     'Engineering Maze':'Solve technical puzzles to escape the room.',
     'Logo Undercover':'Create a logo on a given theme using the items provided.',
     'Pick and Speak':'Pick a topic on the spot and speak on it.',
     'Popsicle Bridge':'Build a truss bridge from popsicle sticks, thread and glue.',
     'Site-to-Solution':'Present a poster on a real engineering problem around campus, with your solution.',
-    'TechVOX (Tech Tark)':'Debate on technical and engineering topics.',
+    'Tech Tark':'Debate on technical and engineering topics.',
     'Waste to Value Construction':'Turn waste materials into a useful construction.',
     'Dance Mania':'Dance competition.',
     'Fancy Flow':'Fancy dress competition.',

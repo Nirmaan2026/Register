@@ -24,9 +24,9 @@ const FOLDER_NAME = 'NIRMAAN 4.0 Payment Screenshots';
 // Must match the website. [early-bird fee, on-spot fee] in rupees; 0 = free event.
 const EARLY_FEE_UNTIL = new Date('2026-11-10T23:59:59+05:30');
 const FEES = {
-  'Arch Tech (Arc Bridge)': [49, 69],
-  'Blindfolded Builder (Blind O Civil)': [49, 69],
-  'Civiotrix (Robotic Arm with Hydraulic System)': [49, 69],
+  'Arc Bridge': [49, 69],
+  'Blind O Civil': [49, 69],
+  'Civiotrix': [49, 69],
   'Earthquake Challenge': [49, 69],
   'Engineering Maze': [49, 69],
   'Logo Undercover': [49, 69],
@@ -34,7 +34,7 @@ const FEES = {
   'Pick and Speak': [49, 69],
   'Popsicle Bridge': [49, 69],
   'Site-to-Solution': [49, 69],
-  'TechVOX (Tech Tark)': [49, 69],
+  'Tech Tark': [49, 69],
   'Waste to Value Construction': [49, 69],
   'Be a Roadie': [59, 79],
   'BGMI': [100, 130],
@@ -52,6 +52,14 @@ const FEES = {
   'Treasure Hunt': [149, 169],
   'Trade War': [149, 169],
   'UNO': [49, 69]
+};
+
+// Earlier event names still accepted and saved under the new name.
+const ALIASES = {
+  'Arch Tech (Arc Bridge)': 'Arc Bridge',
+  'Blindfolded Builder (Blind O Civil)': 'Blind O Civil',
+  'Civiotrix (Robotic Arm with Hydraulic System)': 'Civiotrix',
+  'TechVOX (Tech Tark)': 'Tech Tark'
 };
 
 const HEADERS = ['Timestamp', 'Reg ID', 'Name', 'Mobile', 'Category', 'College', 'Year',
@@ -93,7 +101,7 @@ function doPost(e) {
     const name = clean_(d.name, 80);
     const mobile = String(d.mobile || '').replace(/\D/g, '');
     const category = clean_(d.category, 40);
-    const event = String(d.event || '');
+    const event = ALIASES[String(d.event || '')] || String(d.event || '');
     if (!name) throw new Error('Name is missing.');
     if (!/^[6-9]\d{9}$/.test(mobile)) throw new Error('Mobile number is not valid.');
     if (['GCE Keonjhar student', 'Other college student', 'Faculty'].indexOf(category) < 0) throw new Error('Category is not valid.');
