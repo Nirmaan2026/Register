@@ -48,7 +48,7 @@ const FEES = {
 };
 
 const HEADERS = ['Timestamp', 'Reg ID', 'Name', 'Mobile', 'Category', 'College', 'Year',
-  'Branch / Dept', 'Roll No.', 'Event', 'Fee (₹)', 'Fee type', 'Payment screenshot',
+  'Branch / Dept', 'Roll No.', 'Event', 'Participation', 'Team members', 'Fee (₹)', 'Fee type', 'Payment screenshot',
   'Status', 'Checked by', 'Remarks'];
 const COL = name => HEADERS.indexOf(name) + 1;
 
@@ -59,6 +59,9 @@ function setup() {
   sh.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS])
     .setFontWeight('bold').setBackground('#3b1d2c').setFontColor('#ffffff');
   sh.setFrozenRows(1);
+  const data = sh.getRange(2, 1, sh.getMaxRows() - 1, sh.getMaxColumns());
+  data.clearDataValidations();
+  data.setNumberFormat('General');
   const status = SpreadsheetApp.newDataValidation()
     .requireValueInList(['Pending', 'Verified', 'Rejected'], true).build();
   sh.getRange(2, COL('Status'), sh.getMaxRows() - 1, 1).setDataValidation(status);
@@ -91,6 +94,10 @@ function doPost(e) {
     if (!FEES[event]) throw new Error('Registration for this event is not open yet.');
     const isStudent = category !== 'Faculty';
     if (isStudent && (!d.year || !clean_(d.roll, 40))) throw new Error('Year or roll number is missing.');
+    const group = d.participation === 'Group';
+    const team = group ? (Array.isArray(d.team) ? d.team : []).map(n => clean_(n, 80)).filter(String).slice(0, 9) : [];
+    if (group && !team.length) throw new Error('Team member names are missing.');
+
     const early = new Date() <= EARLY_FEE_UNTIL;
     const fee = early ? FEES[event][0] : FEES[event][1];
     let bytes = null;
@@ -132,7 +139,7 @@ function doPost(e) {
     sh.appendRow([
       new Date(), regId, name, mobile, category,
       clean_(d.college, 120), isStudent ? clean_(d.year, 20) : '', clean_(d.branch, 80),
-      isStudent ? roll : '', event, fee, fee === 0 ? 'Free' : (early ? 'Early-bird' : 'On-spot'),
+      isStudent ? roll : '', event, group ? 'Group of ' + (team.length + 1) : 'Solo', team.join('; '), fee, fee === 0 ? 'Free' : (early ? 'Early-bird' : 'On-spot'),
       shotCell,
       fee === 0 ? 'Verified' : 'Pending', '', remarks.join('; ')
     ]);
