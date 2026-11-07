@@ -208,6 +208,7 @@ input[type=text].good:focus{border-color:var(--copper)}
 .q.off .star{display:none}
 .q.off .chips label{cursor:not-allowed}
 input:disabled,select:disabled{cursor:not-allowed}
+.chips label:has(input:disabled){opacity:.4;cursor:not-allowed}
 
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
 @media (max-width:560px){.row2{grid-template-columns:1fr}}
@@ -498,6 +499,7 @@ input:disabled,select:disabled{cursor:not-allowed}
             <option>Mystery Matrix</option>
             <option>Pick and Speak</option>
             <option>Popsicle Bridge</option>
+            <option>Robo Race</option>
             <option>Site-to-Solution</option>
             <option>Tech Tark</option>
             <option>Waste to Value Construction</option>
@@ -508,6 +510,7 @@ input:disabled,select:disabled{cursor:not-allowed}
             <option>Blind Date</option>
             <option>Chess</option>
             <option>COD</option>
+            <option>Cric Pulse</option>
             <option>Dance Mania</option>
             <option>Face Painting</option>
             <option>Fancy Flow</option>
@@ -516,6 +519,7 @@ input:disabled,select:disabled{cursor:not-allowed}
             <option>Meme King</option>
             <option>Music Melodies</option>
             <option>Short Film Making</option>
+            <option>TalentX – The Ultimate Showdown</option>
             <option>Treasure Hunt</option>
             <option>Trade War</option>
             <option>UNO</option>
@@ -535,6 +539,7 @@ input:disabled,select:disabled{cursor:not-allowed}
           <label><input type="radio" name="mode" id="mode-solo" value="Solo" checked>Solo</label>
           <label><input type="radio" name="mode" id="mode-group" value="Group">Group</label>
         </div>
+        <p class="team-hint" id="group-only" hidden>This is a team event, so register as a group.</p>
         <div id="team-wrap" hidden>
           <p class="team-h">Additional team members</p>
           <p class="team-hint">You are the team leader (member 1) and only you need to register. Add up to 4 more members (a team of up to 5).</p>
@@ -658,7 +663,7 @@ input:disabled,select:disabled{cursor:not-allowed}
     'Logo Undercover':[49,69],
     'Mystery Matrix':[49,69],
     'Pick and Speak':[49,69],
-    'Popsicle Bridge':[49,69],
+    'Popsicle Bridge':[49,69],'Robo Race':[149,149],
     'Site-to-Solution':[49,69],
     'Tech Tark':[49,69],
     'Waste to Value Construction':[49,69],
@@ -666,7 +671,7 @@ input:disabled,select:disabled{cursor:not-allowed}
     'BGMI':[100,130],
     'Blind Date':[79,99],
     'Chess':[49,69],
-    'COD':[100,120],
+    'COD':[100,120],'Cric Pulse':[200,200],
     'Dance Mania':[69,89],
     'Face Painting':[49,69],
     'Fancy Flow':[69,89],
@@ -674,7 +679,7 @@ input:disabled,select:disabled{cursor:not-allowed}
     'Free Fire':[100,130],
     'Meme King':[49,69],
     'Music Melodies':[49,69],
-    'Short Film Making':[99,119],
+    'Short Film Making':[99,119],'TalentX – The Ultimate Showdown':[49,49],
     'Treasure Hunt':[149,169],
     'Trade War':[149,169],
     'UNO':[49,69]
@@ -851,7 +856,7 @@ input:disabled,select:disabled{cursor:not-allowed}
       $('next').textContent='Submit registration';return;
     }
     countFee(fee);
-    $('fee-note').textContent=isEarly()?('Early-bird fee until '+earlyDate+' · ₹'+f[1]+' on-spot'):'On-spot fee (early-bird period has ended)';
+    $('fee-note').textContent=f[0]===f[1]?'Same fee throughout':isEarly()?('Early-bird fee until '+earlyDate+' · ₹'+f[1]+' on-spot'):'On-spot fee (early-bird period has ended)';
     $('next').textContent='Continue to pay ₹'+fee;
   }
   $('event').addEventListener('change',updateFee);
@@ -1071,7 +1076,15 @@ input:disabled,select:disabled{cursor:not-allowed}
   }
   ['mode-solo','mode-group'].forEach(id=>$(id).addEventListener('change',()=>{syncMode();if(isGroup()){const i=$('members').querySelector('input');if(i&&!i.value)i.focus();}}));
   $('add-member').addEventListener('click',()=>addMember('',true));
-  function resetTeam(){$('members').innerHTML='';$('mode-solo').checked=true;syncMode();renumber();}
+  function resetTeam(){$('members').innerHTML='';$('mode-solo').checked=true;syncMode();renumber();syncGroupOnly();}
+  // team-only events: Solo is switched off
+  var GROUP_ONLY=['Cric Pulse'];
+  function syncGroupOnly(){
+    const only=(GROUP_ONLY||[]).indexOf($('event').value)>=0, solo=$('mode-solo');
+    solo.disabled=only;$('group-only').hidden=!only;
+    if(only&&!isGroup()){$('mode-group').checked=true;syncMode();}
+  }
+  $('event').addEventListener('change',syncGroupOnly);
 
   // ---- events sheet
   const sheet=$('sheet'), scrim=$('scrim'), elist=$('elist');
@@ -1088,6 +1101,9 @@ input:disabled,select:disabled{cursor:not-allowed}
     'Logo Undercover':'Create a logo on a given theme using the items provided.',
     'Pick and Speak':'Pick a topic on the spot and speak on it.',
     'Popsicle Bridge':'Build a truss bridge from popsicle sticks, thread and glue.',
+    'Robo Race':'Race your robot through an obstacle track.',
+    'Cric Pulse':'Team event.',
+    'TalentX – The Ultimate Showdown':'Show your talent on stage.',
     'Site-to-Solution':'Present a poster on a real engineering problem around campus, with your solution.',
     'Tech Tark':'Debate on technical and engineering topics.',
     'Waste to Value Construction':'Turn waste materials into a useful construction.',
@@ -1121,13 +1137,16 @@ input:disabled,select:disabled{cursor:not-allowed}
     film:'<path d="M3 10h18v10H3zM3 10l1.4-5.5 16 0L21 10M8.5 4.5L10 10M14.5 4.5L16 10"/>',
     compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
     trend:'<path d="M3 20h18M4 16l5-5 4 3 7-7M15 7h5v5"/>',
+    robot:'<path d="M6 9h12v8H6zM12 9V6M9.5 12.5h.01M14.5 12.5h.01M4 12v3M20 12v3"/><circle cx="12" cy="5" r="1"/><circle cx="8" cy="19.5" r="1.5"/><circle cx="16" cy="19.5" r="1.5"/>',
+    cricket:'<path d="M14.5 3.5l3 3-9 9-3-3zM5.5 12.5L3 15l3 3 2.5-2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+    star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
     cards:'<path d="M4 7.5h10V21H4zM8 7.5V4h10v13.5h-4"/>'
   };
   const ICON_OF={'Arc Bridge':'arch','Popsicle Bridge':'truss','Blind O Civil':'blind','Civiotrix':'arm','Earthquake Challenge':'quake',
     'Engineering Maze':'maze','Logo Undercover':'pen','Mystery Matrix':'grid','Pick and Speak':'mic','Tech Tark':'debate','Site-to-Solution':'poster',
     'Waste to Value Construction':'recycle','Be a Roadie':'road','BGMI':'aim','COD':'aim','Free Fire':'aim','Blind Date':'heart','Chess':'pawn',
     'Dance Mania':'dance','Face Painting':'palette','Fancy Flow':'mask','Flavour Feast':'pot','Meme King':'smile','Music Melodies':'note',
-    'Short Film Making':'film','Treasure Hunt':'compass','Trade War':'trend','UNO':'cards'};
+    'Short Film Making':'film','Robo Race':'robot','Cric Pulse':'cricket','TalentX – The Ultimate Showdown':'star','Treasure Hunt':'compass','Trade War':'trend','UNO':'cards'};
   function renderList(){
     elist.innerHTML='';
     tracks[curTrack].forEach(name=>{
@@ -1140,7 +1159,7 @@ input:disabled,select:disabled{cursor:not-allowed}
       const sm=b.querySelector('.n small'); if(DESC[name])sm.textContent=DESC[name]; else sm.remove();
       b.querySelector('.p b').textContent=main==null?'TBA':rupee(main);
       const ps=b.querySelector('.p small');
-      if(f&&f[1]>0&&early)ps.textContent=rupee(f[1])+' on-spot'; else ps.remove();
+      if(f&&f[1]>0&&f[1]!==f[0]&&early)ps.textContent=rupee(f[1])+' on-spot'; else ps.remove();
       b.setAttribute('aria-label',name+', '+(main==null?'fee to be announced':rupee(main)));
       b.addEventListener('click',()=>pickEvent(name));
       elist.appendChild(b);

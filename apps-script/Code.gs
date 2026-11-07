@@ -33,6 +33,7 @@ const FEES = {
   'Mystery Matrix': [49, 69],
   'Pick and Speak': [49, 69],
   'Popsicle Bridge': [49, 69],
+  'Robo Race': [149, 149],
   'Site-to-Solution': [49, 69],
   'Tech Tark': [49, 69],
   'Waste to Value Construction': [49, 69],
@@ -41,6 +42,7 @@ const FEES = {
   'Blind Date': [79, 99],
   'Chess': [49, 69],
   'COD': [100, 120],
+  'Cric Pulse': [200, 200],
   'Dance Mania': [69, 89],
   'Face Painting': [49, 69],
   'Fancy Flow': [69, 89],
@@ -49,6 +51,7 @@ const FEES = {
   'Meme King': [49, 69],
   'Music Melodies': [49, 69],
   'Short Film Making': [99, 119],
+  'TalentX – The Ultimate Showdown': [49, 49],
   'Treasure Hunt': [149, 169],
   'Trade War': [149, 169],
   'UNO': [49, 69]
@@ -89,7 +92,7 @@ function setup() {
 }
 
 function doGet() {
-  return json_({ ok: true, message: 'NIRMAAN 4.0 registration service is running.' });
+  return json_({ ok: true, message: 'NIRMAAN 4.0 registration service is running.', events: Object.keys(FEES).length });
 }
 
 function doPost(e) {
