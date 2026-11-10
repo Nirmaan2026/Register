@@ -188,6 +188,8 @@ input[type=text].good:focus{border-color:var(--copper)}
 .chips label:has(input:focus-visible){outline:2px solid var(--copper-hi);outline-offset:2px}
 .chips small{display:block;font-weight:500;font-size:11px;opacity:.75}
 .chips.two{grid-template-columns:1fr 1fr}
+.chips.three{grid-template-columns:repeat(3,1fr)}
+.ev .who{display:table;margin:4px 0 2px;font-style:normal;font-size:11px;font-weight:600;letter-spacing:.03em;color:var(--copper);border:1px solid rgba(232,169,139,.35);border-radius:999px;padding:1px 8px;vertical-align:2px;white-space:nowrap}
 .q.invalid .evbtn{background:linear-gradient(var(--surface-2),var(--surface)) padding-box,linear-gradient(135deg,var(--error),var(--error)) border-box}
 .evbtn.picked .evic{background:rgba(232,169,139,.14)}
 .evbtn.picked .evic svg{stroke:var(--copper)}
@@ -535,14 +537,15 @@ input:disabled,select:disabled{cursor:not-allowed}
 
       <div class="q" data-for="team">
         <span class="t" id="mode-l">Participation <span class="star">*</span></span>
-        <div class="chips two" role="radiogroup" aria-labelledby="mode-l">
+        <div class="chips three" role="radiogroup" aria-labelledby="mode-l">
           <label><input type="radio" name="mode" id="mode-solo" value="Solo" checked>Solo</label>
+          <label><input type="radio" name="mode" id="mode-duo" value="Duo">Duo</label>
           <label><input type="radio" name="mode" id="mode-group" value="Group">Group</label>
         </div>
-        <p class="team-hint" id="group-only" hidden>This is a team event, so register as a group.</p>
+        <p class="team-hint" id="mode-note" hidden></p>
         <div id="team-wrap" hidden>
-          <p class="team-h">Additional team members</p>
-          <p class="team-hint">You are the team leader (member 1) and only you need to register. Add up to 4 more members (a team of up to 5).</p>
+          <p class="team-h" id="team-h">Additional team members</p>
+          <p class="team-hint" id="team-hint"></p>
           <div id="members"></div>
           <button type="button" class="addm" id="add-member"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add member</button>
         </div>
@@ -705,7 +708,7 @@ input:disabled,select:disabled{cursor:not-allowed}
 
   function validate(q){
     if(q.dataset.for==='team'){
-      const ok=!isGroup()||teamNames().length>0;
+      const ok=!isGroup()||teamNames().length>=minMembers();
       q.classList.toggle('invalid',!ok);return ok;
     }
     if(q.dataset.for==='college'){
@@ -911,7 +914,7 @@ input:disabled,select:disabled{cursor:not-allowed}
       ?[['Name',$('name').value.trim()],['Mobile','+91 '+mobileDigits()],['Role','Faculty or staff'],['Department',$('branch').value],['Event',ev.name],['Amount paid',free?'Free':'₹'+payFee]]
       :[['Name',$('name').value.trim()],['Mobile','+91 '+mobileDigits()],['College',col],['Year',$('year').value],['Branch',$('branch').value],['Roll no.',$('roll').value.trim()],['Event',ev.name],['Amount paid',free?'Free':'₹'+payFee]];
 
-    if(isGroup()){const t=teamNames();rows.splice(rows.length-1,0,['Participation','Group of '+(t.length+1)],['Team members',t.join(', ')]);}
+    if(isGroup()){const t=teamNames(),duo=mode()==='Duo';rows.splice(rows.length-1,0,['Participation',duo?'Duo':'Group of '+(t.length+1)],[duo?'Partner':'Team members',t.join(', ')]);}
     else rows.splice(rows.length-1,0,['Participation','Solo']);
     const btn=free?$('next'):$('submit-btn'), err=free?$('submit-err1'):$('submit-err'), label=btn.textContent;
     err.hidden=true;sending=true;btn.setAttribute('aria-busy','true');btn.textContent='Submitting…';$('back').disabled=true;
@@ -1052,39 +1055,67 @@ input:disabled,select:disabled{cursor:not-allowed}
   $('clear').addEventListener('click',()=>{reset(false);showStep(1);});
   $('again').addEventListener('click',()=>{reset(true);$('doneView').hidden=true;$('formView').hidden=false;showStep(1);});
 
-  // ---- solo / group
-  const MAX_MEMBERS=4;
-  const isGroup=()=>$('mode-group').checked;
+  // ---- solo / duo / group
+  // modes allowed per event (S solo, D duo, G group) and the largest team size including the leader
+  var PART={
+    'Arc Bridge':['SDG',4],'Blind O Civil':['SD',2],'Civiotrix':['SDG',4],'Earthquake Challenge':['SDG',4],
+    'Engineering Maze':['S',1],'Logo Undercover':['S',1],'Mystery Matrix':['S',1],'Pick and Speak':['S',1],
+    'Popsicle Bridge':['SDG',4],'Robo Race':['SDG',4],'Site-to-Solution':['S',1],'Tech Tark':['S',1],'Waste to Value Construction':['SDG',4],
+    'Be a Roadie':['S',1],'BGMI':['SDG',5],'Blind Date':['S',1],'Chess':['S',1],'COD':['SDG',5],'Cric Pulse':['G',4],
+    'Dance Mania':['SDG',5],'Face Painting':['SDG',4],'Fancy Flow':['SD',2],'Flavour Feast':['SD',2],'Free Fire':['SDG',5],
+    'Meme King':['S',1],'Music Melodies':['SDG',5],'Short Film Making':['S',1],'TalentX – The Ultimate Showdown':['S',1],
+    'Treasure Hunt':['SDG',4],'Trade War':['SDG',4],'UNO':['S',1]
+  };
+  const rule=n=>(PART||{})[n==null?$('event').value:n]||['SDG',5];
+  function whoText(n){const [m,max]=rule(n);return m==='S'?'Solo':m==='SD'?'Solo or duo':m==='G'?'Team of up to '+max:'1 to '+max+' people';}
+  const mode=()=>$('mode-group').checked?'Group':$('mode-duo').checked?'Duo':'Solo';
+  const isGroup=()=>mode()!=='Solo';
+  const maxMembers=()=>mode()==='Duo'?1:rule()[1]-1;
+  const minMembers=()=>mode()==='Duo'?1:2;
   const teamNames=()=>[...$('members').querySelectorAll('input')].map(i=>i.value.trim()).filter(Boolean);
   function renumber(){
-    const rows=[...$('members').children];
-    rows.forEach((r,i)=>{r.querySelector('.mn').textContent=i+2;r.querySelector('input').setAttribute('aria-label','Team member '+(i+2)+' name');r.querySelector('input').placeholder='Member '+(i+2)+' name';});
-    $('add-member').disabled=rows.length>=MAX_MEMBERS;$('add-member').hidden=rows.length>=MAX_MEMBERS;
+    const rows=[...$('members').children],duo=mode()==='Duo';
+    rows.forEach((r,i)=>{const inp=r.querySelector('input');r.querySelector('.mn').textContent=i+2;
+      inp.setAttribute('aria-label',duo?'Partner name':'Team member '+(i+2)+' name');inp.placeholder=duo?'Partner\'s name':'Member '+(i+2)+' name';
+      r.querySelector('.rm').hidden=rows.length<=minMembers();});
+    const full=rows.length>=maxMembers();$('add-member').disabled=full;$('add-member').hidden=full;
   }
   function addMember(val,focus){
     const r=document.createElement('div');r.className='mrow';
     r.innerHTML='<span class="mn"></span><input type="text" autocomplete="off"><button type="button" class="rm" aria-label="Remove member"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
     const inp=r.querySelector('input');inp.value=val||'';
     inp.addEventListener('input',()=>{const p=inp.selectionStart;inp.value=inp.value.toUpperCase();inp.setSelectionRange(p,p);const q=$('team-wrap').closest('.q');if(q.classList.contains('invalid'))validate(q);});
-    r.querySelector('.rm').addEventListener('click',()=>{r.remove();if(!$('members').children.length)addMember('',true);renumber();});
+    r.querySelector('.rm').addEventListener('click',()=>{r.remove();while($('members').children.length<minMembers())addMember('',false);renumber();});
     $('members').appendChild(r);renumber();if(focus)inp.focus();
   }
   function syncMode(){
-    const g=isGroup();$('team-wrap').hidden=!g;
-    if(g&&!$('members').children.length)addMember('',false);
-    const q=$('team-wrap').closest('.q');if(!g)q.classList.remove('invalid');
+    const g=isGroup(),m=mode(),max=rule()[1];$('team-wrap').hidden=!g;
+    const q=$('team-wrap').closest('.q');q.classList.remove('invalid');
+    if(!g)return;
+    while($('members').children.length>maxMembers())$('members').lastElementChild.remove();
+    while($('members').children.length<minMembers())addMember('',false);
+    $('team-h').textContent=m==='Duo'?'Your partner':'Additional team members';
+    $('team-hint').textContent=m==='Duo'?'Only you need to register. Add your partner\'s name.'
+      :'You are the team leader (member 1) and only you need to register. Add '+(max-1>2?'2 to '+(max-1):'2')+' more members (a team of up to '+max+').';
+    $('team-err').textContent=m==='Duo'?'Add your partner\'s name.':'Add at least 2 team members\' names.';
+    renumber();
   }
-  ['mode-solo','mode-group'].forEach(id=>$(id).addEventListener('change',()=>{syncMode();if(isGroup()){const i=$('members').querySelector('input');if(i&&!i.value)i.focus();}}));
+  ['mode-solo','mode-duo','mode-group'].forEach(id=>$(id).addEventListener('change',()=>{syncMode();if(isGroup()){const i=[...$('members').querySelectorAll('input')].find(x=>!x.value);if(i)i.focus();}}));
   $('add-member').addEventListener('click',()=>addMember('',true));
-  function resetTeam(){$('members').innerHTML='';$('mode-solo').checked=true;syncMode();renumber();syncGroupOnly();}
-  // team-only events: Solo is switched off
-  var GROUP_ONLY=['Cric Pulse'];
-  function syncGroupOnly(){
-    const only=(GROUP_ONLY||[]).indexOf($('event').value)>=0, solo=$('mode-solo');
-    solo.disabled=only;$('group-only').hidden=!only;
-    if(only&&!isGroup()){$('mode-group').checked=true;syncMode();}
+  // switch off the options an event does not allow
+  function syncModes(){
+    const has=!!$('event').value,[m,max]=rule();
+    const opt={S:$('mode-solo'),D:$('mode-duo'),G:$('mode-group')};
+    Object.keys(opt).forEach(k=>{opt[k].disabled=has&&m.indexOf(k)<0;});
+    const cur=[...Object.values(opt)].find(i=>i.checked);
+    if(!cur||cur.disabled){(m.indexOf('S')>=0?opt.S:m.indexOf('D')>=0?opt.D:opt.G).checked=true;}
+    const note=$('mode-note');
+    note.hidden=!has;
+    note.textContent=m==='S'?'Solo event: one person per registration.':m==='SD'?'Solo or duo (up to 2 people).':m==='G'?'Team event: register as a team of up to '+max+'.':'Solo, duo or a team of up to '+max+'.';
+    syncMode();
   }
-  $('event').addEventListener('change',syncGroupOnly);
+  function resetTeam(){$('members').innerHTML='';$('mode-solo').checked=true;syncModes();}
+  $('event').addEventListener('change',syncModes);
 
   // ---- events sheet
   const sheet=$('sheet'), scrim=$('scrim'), elist=$('elist');
@@ -1102,7 +1133,6 @@ input:disabled,select:disabled{cursor:not-allowed}
     'Pick and Speak':'Pick a topic on the spot and speak on it.',
     'Popsicle Bridge':'Build a truss bridge from popsicle sticks, thread and glue.',
     'Robo Race':'Race your robot through an obstacle track.',
-    'Cric Pulse':'Team event.',
     'TalentX – The Ultimate Showdown':'Show your talent on stage.',
     'Site-to-Solution':'Present a poster on a real engineering problem around campus, with your solution.',
     'Tech Tark':'Debate on technical and engineering topics.',
@@ -1155,6 +1185,7 @@ input:disabled,select:disabled{cursor:not-allowed}
       const main=f?(early?f[0]:f[1]):null;
       b.innerHTML='<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24">'+(IC[ICON_OF[name]]||IC.grid)+'</svg></span><span class="n"><b></b><small></small></span><span class="p"><b></b><small></small></span><span class="go"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span>';
       const tb=b.querySelector('.n b');tb.textContent=m?m[1]:name;
+      const wh=document.createElement('em');wh.className='who';wh.textContent=whoText(name);tb.after(wh);
       if(m){const al=document.createElement('i');al.className='alt';al.textContent=' · '+m[2];tb.appendChild(al);}
       const sm=b.querySelector('.n small'); if(DESC[name])sm.textContent=DESC[name]; else sm.remove();
       b.querySelector('.p b').textContent=main==null?'TBA':rupee(main);
